@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NFT Classifier</title>
+    <!-- Favicon and Styles -->
+    <link rel="icon" href="/static/logo.png" type="image/png">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Full Logo for the page -->
+        <div class="logo-container">
+            <img src="/static/full_name_logo.png" alt="NFT Classifier Logo" class="logo">
+        </div>
+
+        <!-- Form to handle NFT mint input -->
+        <form id="upload-form">
+            <!-- NFT Mint Address input -->
+            <div class="input-wrapper">
+                <label for="nft-mint">Enter NFT Mint Address:</label>
+                <input type="text" id="nft-mint" name="nft_mint" placeholder="Paste NFT mint address here" required />
+            </div>
+
+            <!-- Classify button -->
+            <input type="submit" value="Classify" class="submit-button">
+        </form>
+
+        <!-- Image preview section -->
+        <div id="image-preview-container">
+            <img id="image-preview" src="/static/placeholder_image.png" alt="Image Preview" style="max-width: 100%; height: auto;" />
+        </div>
+
+        <!-- Prediction result display -->
+        <div id="prediction-result" style="margin-top: 20px;"></div>
+
+    </div>
+
+    <script>
+        // Handle form submission
+        document.getElementById('upload-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            var formData = new FormData();
+            var nftMint = document.getElementById('nft-mint').value;
+
+            if (!nftMint) {
+                alert('Please provide an NFT mint address.');
+                return;
+            }
+
+            formData.append('nft_mint', nftMint);
+
+            fetch('/fetch_nft', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    document.getElementById('prediction-result').textContent = 'Error: ' + data.error;
+                    return;
+                }
+
+                // Display the NFT image or placeholder if no image URL is found
+                if (data.image_url) {
+                    document.getElementById('image-preview').src = data.image_url;
+                } else {
+                    document.getElementById('image-preview').src = '/static/placeholder_image.png';  // Keep placeholder image
+                }
+
+                // Display the prediction with percentage
+                let probabilityPercentage = (data.probability * 100).toFixed(2);
+                document.getElementById('prediction-result').textContent = `Prediction: ${data.prediction}, Probability: ${probabilityPercentage}%`;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('prediction-result').textContent = 'An error occurred.';
+            });
+        });
+    </script>
+</body>
+</html>
